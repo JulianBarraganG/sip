@@ -1,1 +1,5 @@
 *.pdf
+*.tif
+*.png
+*.jpg
+data/
