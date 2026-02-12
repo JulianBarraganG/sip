@@ -3,23 +3,24 @@ from skimage import io
 from skimage.util import random_noise
 from skimage.filters.rank import median, mean
 from skimage.morphology import square
+from scipy.ndimage import gaussian_filter
 from time import time
 
 from numpy.typing import NDArray
 from typing import Literal, Any
-from plotting import plot_filter_comparison, plot_timing_comparison
-from const import DATA_FOLDER, OUTPUT_FOLDER
+from plotting import (
+    plot_filter_comparison,
+    plot_timing_comparison,
+    plot_gaussian_filtering_both_noises,
+    plot_increasing_sigma_both_noises,
+)
 
-
-N = range(1, 26)  # Kernel size
-SP_AMOUNT = 0.05
-VAR = 0.01 # skimage.util.random_noise takes var=std**2 as input
-RUN_COMPARISON = True
-RUN_TIMINGS = False
 
 def add_noise(
     image: NDArray[np.float64],
     noise_type: Literal["salt_pepper", "gaussian"],
+    sp_amount: float = 0.05,
+    var: float = 0.01,
 ) -> NDArray[np.float64]:
     """
     Add noise to an image.
@@ -30,16 +31,23 @@ def add_noise(
         Clean image with values in [0, 1]
     noise_type
         Type of noise to add
+    sp_amount
+        Amount of salt & pepper noise (ignored for gaussian), range is [0, 1]
+    var
+        Variance of gaussian noise (ignored for salt & pepper)
         
     Returns
     -------
     NDArray[np.float64]
         Noisy image with values in [0, 1]
     """
+    assert np.max(image) <= 1., (
+        f"Input image expected range [0, 1], found max: {np.max(image)}"
+    )
     if noise_type == "salt_pepper":
-        return random_noise(image, mode="s&p", amount=SP_AMOUNT)
+        return random_noise(image, mode="s&p", amount=sp_amount)
     else:  # gaussian
-        return random_noise(image, mode="gaussian", var=VAR)
+        return random_noise(image, mode="gaussian", var=var)
 
 
 def apply_filters(
@@ -62,7 +70,7 @@ def apply_filters(
         (mean_filtered, median_filtered) images as uint8
     """
     assert np.max(noisy_image) <= 1., (
-        f"Noise image expected range [0, 1], found max: {np.max(noisy_image)}"
+        f"Noisy image expected range [0, 1], found max: {np.max(noisy_image)}"
     )
     # Convert to uint8 for rank filters
     noisy_uint8 = (noisy_image * 255).astype(np.uint8)
@@ -76,8 +84,8 @@ def run_num_rounds(
     noisy_image: NDArray[np.float64],
     footprint: NDArray[np.bool_],
     filter_type: Literal["mean", "median"],
-    num_rounds: int=100,
-    verbose: bool=False,
+    num_rounds: int = 100,
+    verbose: bool = False,
 ) -> float:
     """
     Apply a specific filter num_rounds times and return average time.
@@ -92,12 +100,17 @@ def run_num_rounds(
         Which filter to benchmark
     num_rounds
         Number of iterations to run
+    verbose
+        Whether to print timing results
         
     Returns
     -------
     float
         Total time in seconds for all rounds
     """
+    assert np.max(noisy_image) <= 1., (
+        f"Noisy image expected range [0, 1], found max: {np.max(noisy_image)}"
+    )
     noisy_uint8 = (noisy_image * 255).astype(np.uint8)
     
     start = time()
@@ -118,13 +131,20 @@ def run_num_rounds(
 
 if __name__ == "__main__":
     from tqdm import tqdm
+    from const import DATA_FOLDER, OUTPUT_FOLDER
+    # Global variables
+    N = range(1, 26)  # Kernel size
+    RUN_COMPARISON = False
+    RUN_TIMINGS = False
+    RUN_FIXED_STD = False
+    RUN_INC_STD = False
     # If folder doesn't exist, make it
     OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
     DATA_FOLDER.mkdir(parents=True, exist_ok=True)
     
     # Load the image
     image_folder = DATA_FOLDER / "images"
-    image_path = image_folder /"eight.tif"
+    image_path = image_folder / "eight.tif"
     assert image_path.exists(), f"Image not found: {image_path}"
     image = io.imread(image_path)
     assert len(image.shape) != 3, (
@@ -133,11 +153,72 @@ if __name__ == "__main__":
     )
     
     # Normalize to [0, 1] range
-    print(f"Original image range: [{image.min()}, {image.max()}]")
     image = image.astype(np.float64) / 255.0
-    print(f"Normalized range: [{image.min()}, {image.max()}]")
 
+    # Assignment 3.3, increasing sigma with N = 3*sigma
+    if RUN_INC_STD:
+        sigmas = [1, 3, 5, 7]
+        save_folder = OUTPUT_FOLDER / "gaussian_increasing_sigma"
+        save_folder.mkdir(parents=False, exist_ok=True)
+        
+        # Generate noisy images once
+        sp_noisy_image = add_noise(image, "salt_pepper")
+        gauss_noisy_image = add_noise(image, "gaussian")
+        
+        for sigma in tqdm(sigmas, desc="Increasing sigma with N=3σ"):
+            # Kernel size N = 3*sigma, radius = (N-1)/2 = (3*sigma - 1)/2
+            radius = int((3*sigma - 1) / 2)
+            kernel_size = 2*radius + 1 # see docs gaussian_filter
+            
+            # Filter both noisy images
+            sp_filtered = gaussian_filter(sp_noisy_image, sigma=sigma, radius=radius)
+            gauss_filtered = gaussian_filter(gauss_noisy_image, sigma=sigma, radius=radius)
+            
+            # Plot side by side
+            plot_increasing_sigma_both_noises(
+                sp_noisy=sp_noisy_image,
+                sp_filtered=sp_filtered,
+                gauss_noisy=gauss_noisy_image,
+                gauss_filtered=gauss_filtered,
+                sigma=sigma,
+                kernel_size=kernel_size,
+                output_folder=save_folder,
+            )
+
+    # Assignment 3.2, fixed std=5 and increasing kernel sizes
+    if RUN_FIXED_STD:
+        std = 5
+        radii = range(1, 13)  # Corresponding to kernel sizes 3, 5, ..., 25
+        save_folder = OUTPUT_FOLDER / "gaussian"
+        # Make dir if it doesn't exist, but don't overwrite existing results
+        save_folder.mkdir(parents=False, exist_ok=True)
+        
+        # Generate noisy images once
+        sp_noisy_image = add_noise(image, "salt_pepper")
+        gauss_noisy_image = add_noise(image, "gaussian")
+        
+        for radius in tqdm(radii, desc=f"Fixed std={std}, varying kernel size"):
+            kernel_size = 2*radius + 1 # see docs gaussian_filter
+            
+            # Filter both noisy images
+            sp_filtered = gaussian_filter(sp_noisy_image, sigma=std, radius=radius)
+            gauss_filtered = gaussian_filter(gauss_noisy_image, sigma=std, radius=radius)
+            
+            # Plot side by side
+            plot_gaussian_filtering_both_noises(
+                sp_noisy=sp_noisy_image,
+                sp_filtered=sp_filtered,
+                gauss_noisy=gauss_noisy_image,
+                gauss_filtered=gauss_filtered,
+                sigma=std,
+                kernel_size=kernel_size,
+                output_folder=save_folder,
+            )
+
+
+    # Assignment 3.1 part 1
     if RUN_COMPARISON:
+        save_folder = OUTPUT_FOLDER / "filtering"
         # Run for all kernel sizes and save comparison plot
         for k_size in tqdm(N, desc="Initial Comparison Plots"):
             for noise_type in ["salt_pepper", "gaussian"]:
@@ -153,9 +234,10 @@ if __name__ == "__main__":
                     median_filtered=median_filtered,
                     noise_type=noise_type,
                     kernel_size=k_size,
-                    output_folder=OUTPUT_FOLDER,
+                    output_folder=save_folder,
                 )
 
+    # Assignment 3.1 part 2
     if RUN_TIMINGS:
         # Execute for each kernel and each filter 100 times and save results
         sp_mean_times = np.zeros(len(N))
@@ -188,3 +270,6 @@ if __name__ == "__main__":
             plot_timing_comparison(
                 kernel_sizes, gauss_mean_times, gauss_median_times, "gaussian", OUTPUT_FOLDER,
             )
+
+    if not(RUN_COMPARISON or RUN_TIMINGS or RUN_FIXED_STD or RUN_INC_STD):
+        print("WARNING: No boolean 'RUN_XYZ' was set to true, script did nothing.")

@@ -137,3 +137,119 @@ def plot_timing_comparison(
     output_path = output_folder / f"timing_comparison_{noise_type}.png"
     plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close()
+
+
+def plot_gaussian_filtering_both_noises(
+    sp_noisy: NDArray[np.float64],
+    sp_filtered: NDArray[np.float64],
+    gauss_noisy: NDArray[np.float64],
+    gauss_filtered: NDArray[np.float64],
+    sigma: float,
+    kernel_size: int,
+    output_folder: Path,
+) -> None:
+    """
+    Plot Gaussian filtering results for both noise types side by side.
+    
+    Parameters
+    ----------
+    sp_noisy
+        Salt & pepper noisy image
+    sp_filtered
+        Gaussian filtered salt & pepper image
+    gauss_noisy
+        Gaussian noisy image
+    gauss_filtered
+        Gaussian filtered gaussian noisy image
+    sigma
+        Standard deviation of Gaussian filter
+    kernel_size
+        Size of the Gaussian kernel
+    output_folder
+        Directory to save the plot
+    """
+    fig, axes = plt.subplots(2, 2, figsize=(12, 12))
+    
+    # Top row: noisy images
+    axes[0, 0].imshow(sp_noisy, cmap="gray", vmin=0, vmax=1)
+    axes[0, 0].set_title("Salt & Pepper Noise", fontsize=12)
+    axes[0, 0].axis("off")
+    
+    axes[0, 1].imshow(gauss_noisy, cmap="gray", vmin=0, vmax=1)
+    axes[0, 1].set_title("Gaussian Noise", fontsize=12)
+    axes[0, 1].axis("off")
+    
+    # Bottom row: filtered images
+    axes[1, 0].imshow(sp_filtered, cmap="gray", vmin=0, vmax=1)
+    axes[1, 0].set_title(f"Gaussian Filtered (S&P, K={kernel_size})", fontsize=12)
+    axes[1, 0].axis("off")
+    
+    axes[1, 1].imshow(gauss_filtered, cmap="gray", vmin=0, vmax=1)
+    axes[1, 1].set_title(f"Gaussian Filtered (Gauss, K={kernel_size})", fontsize=12)
+    axes[1, 1].axis("off")
+    
+    plt.suptitle(f"Gaussian Filter: σ={sigma}, kernel size K={kernel_size}", 
+                 fontsize=14, fontweight="bold")
+    plt.tight_layout()
+    
+    output_path = output_folder / f"gaussian_sigma{sigma}_kernel{kernel_size}.png"
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close()
+
+
+def plot_increasing_sigma_both_noises(
+    sp_noisy: NDArray[np.float64],
+    sp_filtered: NDArray[np.float64],
+    gauss_noisy: NDArray[np.float64],
+    gauss_filtered: NDArray[np.float64],
+    sigma: float,
+    kernel_size: int,
+    output_folder: Path,
+) -> None:
+    """
+    Plot Gaussian filtering with increasing sigma for both noise types.
+    
+    Parameters
+    ----------
+    sp_noisy
+        Salt & pepper noisy image
+    sp_filtered
+        Gaussian filtered salt & pepper image
+    gauss_noisy
+        Gaussian noisy image
+    gauss_filtered
+        Gaussian filtered gaussian noisy image
+    sigma
+        Standard deviation of Gaussian filter
+    kernel_size
+        Size of the Gaussian kernel
+    output_folder
+        Directory to save the plot
+    """
+    fig, axes = plt.subplots(2, 2, figsize=(12, 12))
+    
+    # Top row: noisy images
+    axes[0, 0].imshow(sp_noisy, cmap="gray", vmin=0, vmax=1)
+    axes[0, 0].set_title("Salt & Pepper Noise", fontsize=12)
+    axes[0, 0].axis("off")
+    
+    axes[0, 1].imshow(gauss_noisy, cmap="gray", vmin=0, vmax=1)
+    axes[0, 1].set_title("Gaussian Noise", fontsize=12)
+    axes[0, 1].axis("off")
+    
+    # Bottom row: filtered images
+    axes[1, 0].imshow(sp_filtered, cmap="gray", vmin=0, vmax=1)
+    axes[1, 0].set_title(f"Gaussian Filtered (S&P)\nK={kernel_size}, σ={sigma}", fontsize=12)
+    axes[1, 0].axis("off")
+    
+    axes[1, 1].imshow(gauss_filtered, cmap="gray", vmin=0, vmax=1)
+    axes[1, 1].set_title(f"Gaussian Filtered (Gauss)\nK={kernel_size}, σ={sigma}", fontsize=12)
+    axes[1, 1].axis("off")
+    
+    plt.suptitle(f"Gaussian Filter: σ={sigma}, kernel size={kernel_size}", 
+                 fontsize=14, fontweight="bold")
+    plt.tight_layout()
+    
+    output_path = output_folder / f"increasing_sigma{sigma}_kernel{kernel_size}.png"
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
+    plt.close()

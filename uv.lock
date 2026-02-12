@@ -11,6 +11,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pyqt5" },
     { name = "scikit-image" },
+    { name = "scipy" },
     { name = "soundfile" },
     { name = "tqdm" },
 ]
@@ -21,6 +22,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.4.2" },
     { name = "pyqt5", specifier = ">=5.15.11" },
     { name = "scikit-image", specifier = ">=0.26.0" },
+    { name = "scipy", specifier = ">=1.17.0" },
     { name = "soundfile", specifier = ">=0.13.1" },
     { name = "tqdm", specifier = ">=4.67.3" },
 ]
