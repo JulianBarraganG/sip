@@ -10,4 +10,5 @@ dependencies = [
     "pyqt5>=5.15.11",
     "scikit-image>=0.26.0",
     "soundfile>=0.13.1",
+    "tqdm>=4.67.3",
 ]

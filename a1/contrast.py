@@ -46,9 +46,7 @@ def gamma_transform_value_uint8(
 
 
 if __name__ == "__main__":
-    from pathlib import Path
-    DATA_FOLDER = Path(__name__).parent / "data" / "week1"
-    OUTPUT_FOLDER = Path(__name__).parent / "output"
+    from const import DATA_FOLDER
 
     test_img = imread(DATA_FOLDER / "autumn.tif") 
     transformed = gamma_transform_value_uint8(test_img, 1)

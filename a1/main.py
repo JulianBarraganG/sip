@@ -7,8 +7,9 @@ from const import DATA_FOLDER, OUTPUT_FOLDER
 
 def main():
 
-    cameraman_img = imread(DATA_FOLDER / "cameraman.tif") 
-    autumn_img = imread(DATA_FOLDER / "autumn.tif") 
+    image_folder = DATA_FOLDER / "images"
+    cameraman_img = imread(image_folder / "cameraman.tif") 
+    autumn_img = imread(image_folder / "autumn.tif") 
 
     for k, i in enumerate(np.arange(0.05, 2.1, 0.15)):
         i = np.round(i, decimals=2)
