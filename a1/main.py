@@ -18,6 +18,8 @@ def main():
         camera_save_path = OUTPUT_FOLDER / f"cameraman{k+1}_gamma_{i}.png"
         autumn_save_path = OUTPUT_FOLDER / f"autumn{k+1}_gamma_{i}.png"
         val_autumn_save_path = OUTPUT_FOLDER / f"val_corrected_autumn{k+1}_gamma_{i}.png"
+        # If output folder doesn't exist, create it.
+        OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
         # Save transformed grayscale cameraman image
         plt.imsave(camera_save_path, camera_transformed, format="png", cmap="gray")
         # Save channel-wise gamma corrected autumn image.
