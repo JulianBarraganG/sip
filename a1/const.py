@@ -7,5 +7,4 @@ IMPULSES_FOLDER = join(DATA_FOLDER, "sound-impulses")
 CLAPS_FOLDER = join(IMPULSES_FOLDER, "claps")
 SPLASHES_FOLDER = join(IMPULSES_FOLDER, "splashes")
 
-
-OUTPUT_FOLDER = Path(__name__).parent / "output"
+OUTPUT_FOLDER = Path(__name__) / "output"
