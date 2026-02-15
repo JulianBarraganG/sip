@@ -86,6 +86,10 @@ def normalize_sum(impulse: np.ndarray) -> np.ndarray:
 
 
 sum_normalized_clap = normalize_sum(clap)
+
+print("length of clap: ", clap.shape[0]/clap_samplerate, "seconds")
+print("length of normalized clap: ", sum_normalized_clap.shape[0]/clap_samplerate, "seconds")
+
 sum_normalized_splash = normalize_sum(splash)
 
 norm_conv_clap_left = convolve(laugh_sound[:, 0], sum_normalized_clap[:,0])
