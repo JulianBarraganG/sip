@@ -136,7 +136,7 @@ if __name__ == "__main__":
     N = range(1, 26)  # Kernel size
     RUN_COMPARISON = False
     RUN_TIMINGS = False
-    RUN_FIXED_STD = False
+    RUN_FIXED_STD = True
     RUN_INC_STD = False
     # If folder doesn't exist, make it
     OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     if RUN_FIXED_STD:
         std = 5
         radii = range(1, 13)  # Corresponding to kernel sizes 3, 5, ..., 25
-        save_folder = OUTPUT_FOLDER / "gaussian"
+        save_folder = OUTPUT_FOLDER / "gaussian_fixed_std"
         # Make dir if it doesn't exist, but don't overwrite existing results
         save_folder.mkdir(parents=False, exist_ok=True)
         
