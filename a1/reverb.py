@@ -2,10 +2,14 @@ from scipy.signal import convolve
 import soundfile as sf
 import numpy as np
 import matplotlib.pyplot as plt
-from pathlib import Path
 from const import SAMPLES_FOLDER, CLAPS_FOLDER, SPLASHES_FOLDER, OUTPUT_FOLDER
 import os
 
+save_folder = os.path.join(OUTPUT_FOLDER, "reverb")
+
+
+if not os.path.exists(save_folder):
+    os.makedirs(save_folder)
 
 # Wrote a plotting function for simplicity 
 def plot_soundbyte(soundbytes: list[np.ndarray], labels: list[str], title: str, xlim: tuple[int, int] | None = None, alpha: float = .60, ylim: float | None = None) -> None:
@@ -23,13 +27,14 @@ def plot_soundbyte(soundbytes: list[np.ndarray], labels: list[str], title: str, 
     plt.xlabel("Sample Index")
     plt.ylabel("Amplitude")
     plt.legend()
-    plt.savefig(os.path.join(OUTPUT_FOLDER, title.replace(" ", "_") + ".png"))
+    plt.savefig(os.path.join(save_folder, title.replace(" ", "_") + ".png"))
 
 #TASK 1
 
 #Just load the soundfile, split the channels, and plot it
 laugh2_filename = os.path.join(SAMPLES_FOLDER, "laugh2.wav")
 laugh_sound, laugh_samplerate = sf.read(laugh2_filename)
+print("laugh samplerate: ", laugh_samplerate)
 
 left = laugh_sound[:, 0]
 right = laugh_sound[:, 1]
@@ -62,8 +67,8 @@ plot_soundbyte([laugh_sound[:, 0], convolved_clap_left, convolved_splash_left], 
 convolved_clap = np.stack((convolved_clap_left, convolved_clap_right), axis=1)
 convolved_splash = np.stack((convolved_splash_left, convolved_splash_right), axis=1)
 
-sf.write(os.path.join(OUTPUT_FOLDER, "laugh_convolved_clap.wav"), convolved_clap, laugh_samplerate)
-sf.write(os.path.join(OUTPUT_FOLDER, "laugh_convolved_splash.wav"), convolved_splash, laugh_samplerate)
+sf.write(os.path.join(save_folder, "laugh_convolved_clap.wav"), convolved_clap, laugh_samplerate)
+sf.write(os.path.join(save_folder, "laugh_convolved_splash.wav"), convolved_splash, laugh_samplerate)
 
 
 #Task 3 - sum normalization 
@@ -71,7 +76,6 @@ sf.write(os.path.join(OUTPUT_FOLDER, "laugh_convolved_splash.wav"), convolved_sp
 #I choose to normalize by setting the sum of the impulse to 1
 def normalize_sum(impulse: np.ndarray) -> np.ndarray:
     sum = np.sum(np.abs(impulse))
-    print(f"sum value: {sum}")
     if sum > 0:
         normalized_impulse = impulse / sum
     else:
@@ -79,15 +83,7 @@ def normalize_sum(impulse: np.ndarray) -> np.ndarray:
 
     return normalized_impulse
 
-def normalize_peak(impulse: np.ndarray) -> np.ndarray:
-    peak = np.max(np.abs(impulse))
-    print(f"peak value: {peak}")
-    if peak > 0:
-        normalized_impulse = impulse / peak
-    else:
-        normalized_impulse = impulse
 
-    return normalized_impulse
 
 sum_normalized_clap = normalize_sum(clap)
 sum_normalized_splash = normalize_sum(splash)
@@ -95,5 +91,5 @@ sum_normalized_splash = normalize_sum(splash)
 norm_conv_clap_left = convolve(laugh_sound[:, 0], sum_normalized_clap[:,0])
 norm_conv_splash_left = convolve(laugh_sound[:, 0], sum_normalized_splash[:,0])
 
-plot_soundbyte([laugh_sound[:, 0], norm_conv_clap_left, norm_conv_splash_left], ["Original Laugh Left", "Convolved with Sum Normalized Clap Left", "Convolved with Sum Normalized Splash Left"], "Laugh Sound Convolved with Sum Normalized Impulses (Left Channel)")
+plot_soundbyte([laugh_sound[:, 0], norm_conv_clap_left, norm_conv_splash_left], ["Original Laugh Left", "Convolved with Sum Normalized Clap Left", "Convolved with Sum Normalized Splash Left"], "Laugh Sound Convolved with Sum Normalized Impulses (Left Channel)", xlim=(75000, 78000))
 
