@@ -36,9 +36,9 @@ def visualize_abs_spectrum(image: np.ndarray) -> np.ndarray:
     """
     Takes the log of the absolute value of the input image and scales it to [0, 255] for visualization purposes.
     """
-    log_image = np.log(1 + np.abs(image)) # take the log of the absolute value
-    log_image = log_image / np.max(log_image) # normalize to [0, 1] 
-    log_image = (log_image * 255).astype(np.uint8) # scale to [0, 255] for saving as an image
+    log_image = np.log(1 + np.abs(image)) 
+    log_image = log_image / np.max(log_image) 
+    log_image = (log_image * 255).astype(np.uint8) 
     return log_image
 
 def visualize_power_spectrum(fft: np.ndarray) -> np.ndarray:
@@ -46,9 +46,9 @@ def visualize_power_spectrum(fft: np.ndarray) -> np.ndarray:
     Takes the log of the power spectrum of the input image and scales it to [0, 255] for visualization purposes.
     """
     power_spectrum = np.abs(fft) ** 2
-    log_power_spectrum = np.log(1 + power_spectrum) # take the log of the power spectrum
-    log_power_spectrum = log_power_spectrum / np.max(log_power_spectrum) # normalize to [0, 1] 
-    log_power_spectrum = (log_power_spectrum * 255).astype(np.uint8) # scale to [0, 255] for saving as an image
+    log_power_spectrum = np.log(1+power_spectrum) 
+    log_power_spectrum = log_power_spectrum / np.max(log_power_spectrum) 
+    log_power_spectrum = (log_power_spectrum * 255).astype(np.uint8) 
     return log_power_spectrum
 
 
@@ -61,7 +61,7 @@ def power_spectrum(image: np.ndarray) -> np.ndarray:
     power_spectrum = np.abs(fourier_transform) ** 2
     return power_spectrum
 
-def fft2_and_shift(image: np.ndarray, title:str) -> np.ndarray:
+def fft2_and_shift(image: np.ndarray) -> np.ndarray:
     """
     Computes the 2D Fourier Transform of the input image and shifts the zero-frequency component to the center.
     """
@@ -75,17 +75,25 @@ def fft2_and_shift(image: np.ndarray, title:str) -> np.ndarray:
 task2_output = OUTPUT_FOLDER / "task2"
 task2_output.mkdir(parents=True, exist_ok=True)
 
-def add_cos_wave(image: np.ndarray, title: str) -> np.ndarray:
+def add_cos_wave(image: np.ndarray) -> np.ndarray:
     """
     Adds a cosinus wave to the pixel values of the image.
     """
-    x = np.arange(image.shape[0])  # x = column indices
-    y = np.arange(image.shape[1])  # y = row indices
+    x = np.arange(image.shape[1])  # x = column indices
+    y = np.arange(image.shape[0])  # y = row indices
     xx, yy = np.meshgrid(x, y)
 
     wave = a0 * np.cos(v0 * xx + w0 * yy)
 
-    modified_image = image + wave
+    wave_visual = ((wave + a0) / (2 * a0) * 255).astype(np.uint8)
+    imsave(task2_output / "wave_image.png", wave_visual) # save the wave for visualization purposes
+
+    wave_fft = fftshift(fft2(wave) )
+    imsave(task2_output / "abs_wave_fft.png", visualize_abs_spectrum(wave_fft)) # save the power spectrum of the wave for visualization purposes
+    imsave(task2_output / "power_wave_fft.png", visualize_power_spectrum(wave_fft)) # save the power spectrum of the wave for visualization purposes
+
+    image_float = image.astype(np.float64)
+    modified_image = image_float + wave
     modified_image = np.clip(modified_image, 0, 255).astype(np.uint8) # clip values to [0, 255] and convert to uint8
     return modified_image
 
@@ -103,9 +111,9 @@ def filter_planar_waves(waved_image: np.ndarray, title: str, v0:int, w0:int) -> 
     waved_image_fft = fft2(waved_image)
     magnitude = np.abs(wave_fft)
     coordinates = np.where(magnitude == np.max(magnitude))
-    print(coordinates)
 
-    radius = 6
+
+    radius = 4
 
     #set values in the power spectrum to 0 within a radius around the coordinates of the maximum value in the wave_fft
     for i in range(len(coordinates[0])):
@@ -113,8 +121,6 @@ def filter_planar_waves(waved_image: np.ndarray, title: str, v0:int, w0:int) -> 
         dist2 = (yy - py)**2 + (xx - px)**2
         waved_image_fft[dist2 <= radius**2] = 0
     fixed_image = np.real(ifft2(waved_image_fft)).astype(np.uint8)
-
-    imsave(task2_output / (title + "_wave_removed.png"), fixed_image)
 
     return fixed_image
 
@@ -159,7 +165,7 @@ task4_output.mkdir(parents=True, exist_ok=True)
 
 
 def visualize_angular_bins(shape: tuple = (300,300), bin_size: int = 10, 
-                            freq_min: int = 10, freq_max: int = 100):
+                            freq_min: int = 30, freq_max: int = 100):
     H, W = shape
     cy, cx = H // 2, W // 2
 
@@ -176,26 +182,17 @@ def visualize_angular_bins(shape: tuple = (300,300), bin_size: int = 10,
     visualization = np.full((H, W), np.nan)
     visualization[freq_mask] = (angles[freq_mask] // bin_size) * bin_size
 
-    plt.figure(figsize=(6, 6))
+    plt.figure(figsize=(8,6))
     plt.imshow(visualization, cmap='hsv', vmin=0, vmax=360)
     plt.colorbar(label='Angle (degrees)')
     plt.axis('off')
     plt.title(f'Angular Bins with {bin_size}° bins and spatial frequency range [{freq_min}-{freq_max}]')
-    plt.show()
-
+    plt.savefig(task4_output / "angular_bins_visualization.png")
+    plt.close()
 
 def mean_power_spectrum_angles(shifted_power_spectrum: np.ndarray, bin_size: int = 10, freq_min: int = 10, freq_max: int = 100) -> np.ndarray:
     H, W = shifted_power_spectrum.shape
     cy, cx = H // 2, W // 2
-
-    x = np.arange(W) - cx
-    y = np.arange(H) - cy
-    xx, yy = np.meshgrid(x, y)
-
-    dist = np.sqrt(xx**2 + yy**2)
-    angles = np.degrees(np.arctan2(yy, xx)) % 360
-
-    angular_bins = (angles // bin_size) * bin_size
     unique_bins = np.arange(0, 360, bin_size)
 
     bins = np.zeros_like(unique_bins, dtype=np.float64)
@@ -206,11 +203,10 @@ def mean_power_spectrum_angles(shifted_power_spectrum: np.ndarray, bin_size: int
     for x in range(W):
         for y in range(H):
             #check that the distance from the center is within the specified frequency range
-            if freq_min <= dist[y, x] <= freq_max:
-                angle_to_center = angles[y, x]
-                bin_index = int(angle_to_center // bin_size)
-                bins[bin_index] += shifted_power_spectrum[y, x]
-                bins_counts[bin_index] += 1
+            angle_to_center = np.degrees(np.arctan2(y - cy, x - cx)) % 360 
+            bin_index = int(angle_to_center // bin_size)
+            bins[bin_index] += shifted_power_spectrum[y, x]
+            bins_counts[bin_index] += 1
     mean_power_by_angle = bins / np.maximum(bins_counts, 1)  # Avoid division by zero
     return mean_power_by_angle
 
@@ -232,44 +228,48 @@ def spatial_derivative(image: np.ndarray, x_order: int, y_order:int) -> np.ndarr
     # Apply via multiplication in frequency domain
     F = np.fft.fft2(image)
     result = np.fft.ifft2(F * kernel)
-
-    
-
-
-
     return np.real(result).astype(np.float64)
 
 if __name__ == "__main__":
 
     #task1
     trui_img = imread(IMAGES_FOLDER / "trui.png") 
-    shifted_fourier_transform = fft2_and_shift(trui_img, "trui")
+
+    shifted_fourier_transform = fft2_and_shift(trui_img)
+
+    imsave(task1_output / ("trui_original.png"), trui_img)
 
     imsave(task1_output / ("trui_power_shifted.png"), visualize_power_spectrum(shifted_fourier_transform)) 
 
     #task2 
     cameraman_img = imread(IMAGES_FOLDER / "cameraman.tif")
     imsave(task2_output / "cameraman_original.png", cameraman_img)
-    modified_image = add_cos_wave(cameraman_img, "cameraman")
+    imsave(task2_output / "cameraman_power_spectrum.png", visualize_power_spectrum(fft2_and_shift(cameraman_img)))
+    modified_image = add_cos_wave(cameraman_img)
     imsave(task2_output / "cameraman_modified.png", modified_image)
+    imsave(task2_output / "cameraman_modified_power_spectrum.png", visualize_power_spectrum(fft2_and_shift(modified_image)))
 
-    _ = fft2_and_shift(cameraman_img, "cameraman_original")
-    modified_power_spectrum = fft2_and_shift(modified_image, "cameraman_modified")
-    _ = filter_planar_waves(modified_image, "cameraman_modified", v0, w0)
+    modified_power_spectrum = fft2_and_shift(modified_image)
+    fixed_image = filter_planar_waves(modified_image, "cameraman_modified", v0, w0)
+    imsave(task2_output / "cameraman_fixed.png", fixed_image)
+    imsave(task2_output / "cameraman_fixed_power_spectrum.png", visualize_power_spectrum(fft2_and_shift(fixed_image)))
 
     #task 3
 
     big_ben_image= imread(IMAGES_FOLDER / "bigben_cropped_gray.png")
     sum = radial_average(power_spectrum(big_ben_image))
-    log_plot(sum, "big ben radial average", "radius", "mean power", task3_output)
 
     random_noise = (np.random.rand(big_ben_image.shape[0], big_ben_image.shape[1]) * 255).astype(np.uint8)
     noise_sum = radial_average(power_spectrum(random_noise))
-    log_plot(noise_sum, "random noise radial average", "radius", "mean power", task3_output)
+
+    y_lim = (np.min([sum, noise_sum]), np.max([sum, noise_sum]))
+
+    log_plot(sum, "big ben radial average", "spatial frequency", "mean power", task3_output, ylim = y_lim)
+    log_plot(noise_sum, "random noise radial average", "spatial frequency", "mean power", task3_output, ylim= y_lim)
 
 
     #task 4 
-    #visualize_angular_bins()
+    visualize_angular_bins()
     angle_values = np.arange(0, 360, 10)
     
     mean_bigben = mean_power_spectrum_angles(power_spectrum(big_ben_image))
@@ -284,14 +284,16 @@ if __name__ == "__main__":
     
     
     #task 5 
-    pout_image = imread(IMAGES_FOLDER / "pout.tif")
-    result = spatial_derivative(pout_image, x_order=0, y_order=1)
+    for x_order in range(3): 
+        for y_order in range(3):
 
-    # For visualization only:
-    plt.imshow(result, cmap='bwr')  # bwr is good for signed data (blue-white-red)
-    plt.colorbar()                  # the assignment asks for a colorbar!
-    plt.savefig(task5_output / "pout_spatial_derivative.png")
-    plt.close()
+            result = spatial_derivative(big_ben_image, x_order=x_order, y_order=y_order)
+
+            # For visualization only:
+            plt.imshow(result, cmap='gray')  # bwr is good for signed data (blue-white-red)
+            plt.colorbar()                  # the assignment asks for a colorbar!
+            plt.savefig(task5_output / f"bigben_spatial_derivative_x{x_order}_y{y_order}.png")
+            plt.close()
 
 
 
