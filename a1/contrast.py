@@ -4,10 +4,9 @@ import matplotlib.pyplot as plt
 from skimage.io import imread
 from skimage.color import rgb2hsv, hsv2rgb
 
-
 def single_channel_gamma_transform_uint8(
     image: np.ndarray,
-    gamma: float,
+    gamma: float
 ) -> np.ndarray:
     """Given an image as a (N, M) numpy array, makes gamma correction 
     transformation"""
@@ -46,7 +45,7 @@ def gamma_transform_value_uint8(
 
 
 if __name__ == "__main__":
-    from const import DATA_FOLDER
+    from const import IMAGES_FOLDER
 
-    test_img = imread(DATA_FOLDER / "autumn.tif") 
+    test_img = imread(IMAGES_FOLDER / "autumn.tif") 
     transformed = gamma_transform_value_uint8(test_img, 1)
