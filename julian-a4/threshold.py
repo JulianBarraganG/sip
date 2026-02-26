@@ -1,4 +1,5 @@
 import numpy as np
+from skimage.color import rgb2gray
 from numpy.typing import NDArray
 from typing import Any
 
@@ -9,14 +10,14 @@ def threshold_image(
     """Convert image to grayscale, apply threshoding and return binary 
     segmentation mask."""
     assert threshold >= 0 and threshold <= 255, "threshold must be in [0,255] range"
-    # Convert to grayscale
+    # Convert to grayscale if it isn't already
     if image.ndim == 3 and image.shape[2] == 3:
-        gray = np.mean(image, axis=2).astype(np.uint8)
+        gray = rgb2gray(image)*255 # rescale from [0,1] to [0,255]
     else:
         gray = image.astype(np.uint8)
 
     # Apply thresholding
-    binary_mask = np.where(gray >= threshold, 255, 0).astype(np.uint8)
+    binary_mask = np.where(gray >= threshold, 1, 0).astype(np.uint8)
     
     return binary_mask
 
@@ -33,11 +34,16 @@ if __name__ == "__main__":
     SAVE_PATH = OUTPUT_FOLDER / "thresholding.png"
 
     test_img = imread(IMAGES_FOLDER / "pillsect.png") 
-    plot_thresholding(test_img, SAVE_PATH)
+    gray_img = rgb2gray(test_img)*255
+    thresh = 100 # the threshold
+    plot_thresholding(test_img, SAVE_PATH, thresh)
     # Plot the histogram using matplotlib.pyplot.hist of original image
     import matplotlib.pyplot as plt
-    plt.hist(test_img.ravel(), bins=256, range=(0, 255))
+    plt.hist(gray_img.ravel(), bins=256, range=(0, 255), label="Histogram of Grayscale Image")
+    # Plot a vertical dotted line at x=100
+    plt.axvline(x=100, color="r", linestyle="--", label="Threshold=100")
     plt.title("Histogram of Original Image")
+    plt.legend()
     plt.xlabel("Pixel Intensity")
     plt.ylabel("Frequency")
     plt.xlim(0, 255)
