@@ -4,3 +4,4 @@
 *.jpg
 data/
 */output/
+*__pycache__/
