@@ -1,0 +1,124 @@
+\section{Image Filtering}
+
+
+\subsection{}
+
+If we wanted to filter an image using correlation which implements these approximate derivatives,
+we need a kernel that sets the center pixel to the average of the western and eastern pixel for the $x$-derivative filter kernel,
+and the northen and southern pixels for the $y$-derivative filter kernel.
+This follos straight from the approximate derivative.
+The Finite Approximate Derivatie kernels - henceforth referred to as FDA kernels - are thus:
+\footnote{
+	Assuming that image coordinates follow standard convention for $x$-axis left-to-right and $y$-axis top-to-bottom.
+}
+\begin{figure}[H]
+	\begin{equation}
+		\text{FDA}^x:=
+		\frac{1}{2}
+		\begin{bmatrix}
+			0 & 0 & 0 \\	
+			-1 & 0 & 1 \\
+			0 & 0 & 0
+		\end{bmatrix},
+		\qquad
+		\text{FDA}^y:=
+		\frac{1}{2}
+		\begin{bmatrix}
+			0 & -1 & 0 \\	
+			0 & 0 & 0 \\
+			0 & 1 & 0
+		\end{bmatrix}
+	\end{equation}
+	\caption{FDA kernels for correlation-based filtering.}
+\end{figure}
+
+
+
+If instead we wanted to achieve the FDA filtering using convolution, the orientation will be flipped.
+Of course "flipping the orientation" is the geometric interpretation of the difference in the mathematical definition of the two operations convolution and correlation.
+We can imagine, that when we do correlation, we are sliding the kernel across the image, and at each position we are multiplying the kernel values with the corresponding image pixel values and summing them up to get the output pixel value.
+In convolution, we first flip the kernel both horizontally and vertically before sliding it across the image.
+
+In this particular case, flipping either kernel would be equivalent to multiplying by -1, and the resulting convolution kernels would be:
+
+\begin{figure}[H]
+	\begin{equation}
+		\text{FDA}^x:=
+		\frac{1}{2}
+		\begin{bmatrix}
+			0 & 0 & 0 \\	
+			1 & 0 & -1 \\
+			0 & 0 & 0
+		\end{bmatrix},
+		\qquad
+		\text{FDA}^y:=
+		\frac{1}{2}
+		\begin{bmatrix}
+			0 & 1 & 0 \\	
+			0 & 0 & 0 \\
+			0 & -1 & 0
+		\end{bmatrix}.
+	\end{equation}
+	\caption{FDA kernels for convolution-based filtering.}
+\end{figure}
+
+In both cases, the center pixel of the kernel is at the FDA$^x_{1,1}$ and $FDA^y_{1,1}$ position.
+\footnote{
+	Assuming 0-based indexing for the kernel matrix.
+}
+
+For Gaussian and mean filter kernels, whether we perform correlation or convulution results in the same output image,
+simply because these kernels are symmetric, which implies that flipping the orientation of the kernel vertically and horizontally
+results in the exact same kernel.
+
+\subsection{Noise Robustness}
+
+Writing up the Prewitt and Sobel convulution filters in their linear seperable form we get:
+
+\begin{figure}[H]
+	\begin{align}
+		\text{Prewitt}
+		=&f
+		*\begin{bmatrix}
+			1 \\
+			0 \\
+			-1
+		\end{bmatrix}
+		\cdot\begin{bmatrix}
+			1 & 1 & 1
+		\end{bmatrix}
+		=
+		f*
+		\begin{bmatrix}
+			1 & 1 & 1 \\
+			0 & 0 & 0 \\
+			-1 & -1 & -1
+		\end{bmatrix}
+		\\
+		\text{Sobel}
+		=&f
+		*\begin{bmatrix}
+			-1 \\
+			0 \\
+			1
+		\end{bmatrix}
+		\cdot\begin{bmatrix}
+			1 & 2 & 1
+		\end{bmatrix}
+		=
+		f*
+		\begin{bmatrix}
+			-1 & -2 & -1 \\
+			0 & 0 & 0 \\
+			1 & 2 & 1
+		\end{bmatrix}.
+	\end{align}
+	\caption{Prewitt and Sobel filters in their linear seperable form.}
+\end{figure}
+When we consider these kernels as outputting a pixel as a weighted average of a scanned $3\times 3$ window of the input image,
+both filters achieve similar "rate of change" filtering similar to the FDA filters.
+However the FDA filters only consider directly adjacent pixels in the $x$ or $y$ direction,
+wheras the Prewitt and Sobel filters also allow influence of the diagonal pixels, albeit half as much as the directly adjacent ones.
+Images tend to have high local correlation, which motivates including these diagonal pixels.
+Particularly any noisy pixel -- e.g. salt-and-pepper noise -- which is uncorrelated with its neighbors,
+will have less influence on the output pixel value when we include the diagonal pixels in the filter kernel.

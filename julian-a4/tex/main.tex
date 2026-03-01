@@ -1,0 +1,76 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{a4wide}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[a4paper, left=20mm, right=20mm, top=20mm, bottom=20mm]{geometry}
+
+
+% Reset counter for align equations
+\usepackage{etoolbox}
+\AtBeginEnvironment{align}{\setcounter{equation}{0}}
+\AtBeginEnvironment{alignat}{\setcounter{equation}{0}}
+
+% For including images
+\usepackage{graphicx}
+\usepackage{float}
+
+% For making diagrams
+\usepackage{tikz-cd}
+\usepackage{xcolor}  % For a colorfull presentation
+\usepackage{listings}  % For presenting code 
+
+\usepackage{hyperref}
+
+% Definition of a style for code, matter of taste
+\lstdefinestyle{mystyle}{
+  language=Python,
+  basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color[HTML]{F7F7F7},
+  rulecolor=\color[HTML]{EEEEEE},
+  identifierstyle=\color[HTML]{24292E},
+  emphstyle=\color[HTML]{005CC5},
+  keywordstyle=\color[HTML]{D73A49},
+  commentstyle=\color[HTML]{6A737D},
+  stringstyle=\color[HTML]{032F62},
+  emph={@property,self,range,True,False},
+  morekeywords={super,with,as,lambda},
+  literate=%
+    {+}{{{\color[HTML]{D73A49}+}}}1
+    {-}{{{\color[HTML]{D73A49}-}}}1
+    {*}{{{\color[HTML]{D73A49}*}}}1
+    {/}{{{\color[HTML]{D73A49}/}}}1
+    {=}{{{\color[HTML]{D73A49}=}}}1
+    {/=}{{{\color[HTML]{D73A49}=}}}1,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=none,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=4,
+  frame=single,
+}
+\lstset{style=mystyle}
+
+\title{Assignment 4 -- Individual}
+\author{rbs813 Barragan Gutierrez}
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+\input{sec1}
+\input{sec2}
+\input{sec3}
+\input{sec4}
+
+\end{document}

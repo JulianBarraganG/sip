@@ -1,0 +1,73 @@
+\section{Segmentation by Thresholding}
+
+Using \texttt{numpy} one can easily make the following function which takes an
+RGB image in either grayscale or color (1 or 3 channels) and a threshold value
+to produce a binary segmentation mask.
+
+\begin{lstlisting}
+def threshold_image(
+    image: NDArray[Any | np.uint8],
+    threshold: int,
+) -> NDArray[np.uint8]:
+    assert threshold >= 0 and threshold <= 255, "threshold must be in [0,255] range"
+    if image.ndim == 3 and image.shape[2] == 3:
+        gray = rgb2gray(image)*255 # rescale from [0,1] to [0,255]
+    else:
+        gray = image.astype(np.uint8)
+
+    binary_mask = np.where(gray >= threshold, 1, 0).astype(np.uint8)
+    
+    return binary_mask
+\end{lstlisting}
+It is worth noting, that by converting to grayscale with \texttt{skimage.color.rgb2gray},
+we are using a weighted average which heavily favors green.
+This weighting is supposed to reflect the color sensitivities of the human eye, which is most sensitive to green light.
+For this particular segmentation task, it proves beneficial, but when the objective is not
+a grayscaling which corresponds more accurately to our visual perception,
+but rather background-foreground seperation,
+it may be worth considering other methods of grayscaling, such as a simple average of the RGB channels.
+
+By plotting the binary mask as an image with e.g. \texttt{matplotlib.pyplot.imshow} as grayscale,
+the binary mask is automatically scaled such that 1 is a white pixel and 0 is a black one. The resulting image can be seen below:
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{images/thresholding.png}
+	\caption{Original, grayscale, and binary segmentation of the same \texttt{pillsect.png} image sidy-by-side.}
+	\label{fig:thresh}
+\end{figure}
+
+For this image, we see that we have somewhat succesfully seperated the foreground and the background.
+The green object, when converted to grayscale, which is done by averaging the three RGB color channels.
+We can see that the grayscale image has very little distinction from the original, except for the green object.
+This green object becomes rather gray in the grayscale image, which in turn results in our thresholding function
+falling somewhat short for seperating the object from the background perfectly.
+However the other objects are very well seperated.
+
+Another noticable result, is the salt-like noise. This is due to the texture of the background, 
+having a decent splatter splatter of bright and light-gray to white pixels.
+It would be interesting to see the result of applying some filtering kernel like e.g. Gaussian, mean, or median prior 
+to thresholding. Depending on the task at hand, this may or may not be necessary.
+
+Overall a very decent segmentation, albeit with quite a bit of salt-like noise.
+
+\subsection{Intensity Histogram}
+
+We now plot the (pixel) intensity histogram of the grayscale image.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.65\textwidth]{images/histogram.png}
+	\caption{Pixel intensity histogram of the grayscale image.}
+	\label{fig:histogram}
+\end{figure}
+
+The plot includes a dotted red vertical line indicating where we set the threshold.
+From the histogram, it is clear that we successfully segmented the two major clusters of pixel intensities:
+the cluster between $\approx 20$ and $\approx 90$, and the cluster of white pixels around 255.
+We do, however, observe that some pixels are being cut off which arguably belong to the low-intensity cluster.
+This "tail" of higher intensities is most likely part of the background,
+and assuming this is the case, setting the threshold somewhat higher 
+-- to, say, 125 -- could have resulted in less salt-like noise.
+From the histogram alone, however, we cannot distinguish which frequencies in the 
+$[100, 150]$ interval correspond to salt-like noise and which belong to low-intensity green object pixels,
+so the current threshold of 100 is not necessarily incorrect.
