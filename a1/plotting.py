@@ -41,19 +41,19 @@ def plot_filter_comparison(
     fig, axes = plt.subplots(2, 2, figsize=(12, 12))
     
     axes[0, 0].imshow(noisy, cmap="gray", vmin=0, vmax=1)
-    axes[0, 0].set_title(f"{noise_name} Noise")
+    axes[0, 0].set_title(f"{noise_name} Noise", fontsize=24)
     axes[0, 0].axis("off")
     
     axes[0, 1].imshow(original, cmap="gray", vmin=0, vmax=1)
-    axes[0, 1].set_title("Original Clean Image")
+    axes[0, 1].set_title("Original Clean Image", fontsize=24)
     axes[0, 1].axis("off")
     
     axes[1, 0].imshow(mean_filtered, cmap="gray", vmin=0, vmax=255)
-    axes[1, 0].set_title(f"Mean Filter (kernel size={kernel_size})")
+    axes[1, 0].set_title(f"Mean Filter (kernel size={kernel_size})", fontsize=24)
     axes[1, 0].axis("off")
     
     axes[1, 1].imshow(median_filtered, cmap="gray", vmin=0, vmax=255)
-    axes[1, 1].set_title(f"Median Filter (kernel size={kernel_size})")
+    axes[1, 1].set_title(f"Median Filter (kernel size={kernel_size})", fontsize=24)
     axes[1, 1].axis("off")
     
     plt.tight_layout()

@@ -1,0 +1,70 @@
+\section{Fourier Transform - Theory}
+
+\subsection{Fourier Series vs Transform}
+
+The Fourier series represents a \textit{periodic} signal as a discrete linear combination of 
+sine and cosine functions at integer multiples of a fundamental frequency.
+The Fourier transform generalizes this to \textit{non-periodic} signals by projecting 
+the signal onto complex exponentials across a continuum of frequencies,
+replacing the discrete sum with an integral.
+
+\subsection{Derivation}
+
+We will now show the derivation of the Fourier transform of $f(x):=\delta(x-d)+\delta(x+d)$
+\begin{proof}
+If we examine the Fourier transform simply by inserting $f(x)$ in the definition, we see:
+\begin{equation}
+	\mathcal{F}\{f\}(u) 
+	= F(u)
+	= \int_{-\infty}^{\infty} \big(
+		\delta(x-d)+\delta(x+d)
+	\big)e^{-i 2 \pi u x} dx
+\end{equation}
+
+And by definition of the dirac-delta function, we know that the expression
+will be 0 everywhere except at $x=d$ and $x=-d$.
+By first rewriting by linearity of the integral, we can then evaluate the integral at the two points:
+\begin{equation}
+	F(u)
+	= \int_{-\infty}^{\infty} \delta(x-d)e^{-i 2 \pi u x} dx
+	+ \int_{-\infty}^{\infty} \delta(x+d)e^{-i 2 \pi u x} dx
+\end{equation}
+
+Applying a shift translation by $d$ and $-d$ for the first and second integral respectively,
+we get them on the following form:
+
+\begin{equation}
+	F(u)
+	= \int_{-\infty}^{\infty} \delta(x)e^{-i 2 \pi u (x+d)} dx
+	+ \int_{-\infty}^{\infty} \delta(x)e^{-i 2 \pi u (x-d)} dx
+\end{equation}
+And by the shifting property of the dirac-delta function,
+which states
+$\int_{-\infty}^{\infty} \delta(x-a)f(x) dx = f(a)$,
+\footnote{
+	From lecture slides on Convolution week 1
+}
+we can evaluate the two integrals as follows:
+\begin{equation}
+	F(u)
+	= \int_{-\infty}^{\infty} \delta(x)e^{-i 2 \pi u (x+d)} dx
+	+ \int_{-\infty}^{\infty} \delta(x)e^{-i 2 \pi u (x-d)} dx
+	= e^{i 2 \pi u d} + e^{-i 2 \pi  u d}.
+\end{equation}
+Finally by Euler's formula, we can rewrite this as:
+\begin{align}
+	F(u) 
+	=& \big(
+		\cos(2\pi u d) + i \sin(2\pi u d)
+	\big) + \big(
+		\cos(-2\pi u d) + i \sin(-2\pi u d)
+	\big) \\
+	=&  \big(
+		\cos(2\pi u d) + i \sin(2\pi u d)
+	\big) + \big(
+		\cos(2\pi u d) - i \sin(2\pi u d)
+	\big) \\
+	=& 2 \cos(2\pi u d)
+\end{align}
+Where the intermediate step (2) follows from the fact that $\cos$ is an even function and $\sin$ is an odd function.
+\end{proof}

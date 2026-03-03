@@ -1,0 +1,102 @@
+\section{Fourier Transform -- Practice}
+
+Due to the result of the convolution theorem:
+$\mathcal{F}\{f * g\} = \mathcal{F}\{f\} \cdot \mathcal{F}\{g\}$
+one can apply a Gaussian filter by multiplying the Fourier transform of
+the image with the Fourier transform of the Gaussian kernel.
+I.e. the product in the frequency domain corresponds to convolution in the spatial domain.
+Rather than taking the Fourier transform of the Gaussian kernel,
+we can derive it analytically and code it directly.
+Let $g(x, y) = \frac{a}{\pi} e^{-a(x^2 + y^2)}$ be a 2D Gaussian kernel with parameter $a > 0$.
+The derivation is as follows:
+
+\begin{align}
+    \mathcal{F}\{g\}(u, v)
+    &= G(u, v)
+    = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} g(x, y) e^{-i 2 \pi (ux + vy)} \, dx \, dy \\
+    &= \frac{a}{\pi} \int_{-\infty}^{\infty} \int_{-\infty}^{\infty}
+       e^{-a(x^2 + y^2)} e^{-i 2 \pi (ux + vy)} \, dx \, dy \\
+    &= \frac{a}{\pi} \int_{-\infty}^{\infty} e^{-ax^2 -i 2 \pi ux} \, dx
+       \int_{-\infty}^{\infty} e^{-ay^2 -i 2 \pi vy} \, dy \\
+    &= \frac{a}{\pi}
+       \sqrt{\frac{\pi}{a}} e^{\left(
+		   \frac{-\pi^2 u^2}{a}
+	   \right)}
+       \cdot
+       \sqrt{\frac{\pi}{a}} e^{\left(
+		   \frac{-\pi^2 v^2}{a}
+   	   \right)} \\
+    &= \frac{a}{\pi} \cdot \frac{\pi}{a}
+       e^{\left(
+		   \frac{-\pi^2 (u^2 + v^2)}{a}
+   	   \right)} \\
+    &= e^{\left(
+		\frac{-\pi^2 (u^2 + v^2)}{a}
+	\right)}
+\end{align}
+where the separability of the exponent in line 3 allows the double integral to factor
+into a product of two independent 1D integrals i.e. they only depend on $x$ and $y$ respectively,
+and thus can be evaluated separately.
+Each integral is evaluated by completing the square in the exponent,
+yielding the standard Gaussian integral result
+$\int_{-\infty}^{\infty} e^{-(ax^2 + bx)} \, dx 
+= \sqrt{\frac{\pi}{a}} e^{\left(
+	\frac{b^2}{4a}
+\right)}$
+with $b = 2\pi i u$ and $b = 2\pi i v$ respectively.
+\footnote{
+	Note that since we square $b$ in the exponent,
+	the imaginary part cancels out.
+}
+Substituting $a = \frac{1}{2\sigma^2}$ yields the filter used in the implementation:
+\begin{equation}
+    G(u, v) = \exp\!\left(-2\pi^2 \sigma^2 (u^2 + v^2)\right)
+\end{equation}
+
+\begin{lstlisting}
+def scale_fft(
+    image: NDArray[Any],
+    sigma: float,
+) -> NDArray[np.float64]:
+    assert sigma > 0, "sigma must be positive"
+    assert image.ndim == 2, "image must be a 2-D grayscale array"
+
+    rows, cols = image.shape
+
+    # Frequency coordinates in cycles-per-pixel, range [-0.5, 0.5)
+    u = np.fft.fftfreq(cols)
+    v = np.fft.fftfreq(rows)
+    # Prepare and perform fft on image
+    U, V = np.meshgrid(u, v)
+    F = np.fft.fft2(image)
+    # Multiply in frequency space with Gaussian filter kernel function G
+    G = np.exp(-2 * np.pi**2 * sigma**2 * (U**2 + V**2))
+    F_filtered = F * G
+
+    # Inverse FFT; take real part to discard numerical imaginary residuals
+    return np.real(np.fft.ifft2(F_filtered))
+
+\end{lstlisting}
+
+The implementation constructs the frequency coordinates using \texttt{np.fft.fftfreq},
+which generates the appropriate frequency bins for the given image dimensions,
+such that the Nyquist frequency corresponds to 0.5 cycles per pixel.
+Based on the frequency coordinates, we can compute the Gaussian filter kernel $G(u, v)$ directly in the frequency domain,
+and then apply it to the Fourier transform of the image.
+Finally, the inverse Fourier transform is computed to obtain the filtered image in the spatial domain,
+and the real part is taken to eliminate any numerical artifacts that may arise from the inverse transform.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{images/scale_fft.png}
+	\caption{Gaussian filtering in the frequency domain, with sigmas = $\{1, 3, 7, 15, 30\}$}
+	\label{fig:scale_fft}
+\end{figure}
+
+The above figure \ref{fig:scale_fft} illustrates the expected blurring effect of applying a Gaussian filter.
+Increasing $\sigma$ widens the Gaussian in the spatial domain, meaning each output pixel 
+is a weighted average with increasingly even contribution of neighboring pixels, 
+thus resulting stronger blurring.
+Equivalently, in the frequency domain, a larger $\sigma$ narrows the Gaussian filter $G(u, v)$, 
+attenuating high frequencies more aggressively -- which correspond to fine details and edges -- 
+while preserving low frequencies, which correspond to coarse structure.
