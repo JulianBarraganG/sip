@@ -58,7 +58,6 @@ def scale_fft(
 
 if __name__ == "__main__":
     from skimage.io import imread
-    from skimage.data import chelsea  # fallback if trui.png is unavailable
     from pathlib import Path
 
     DATA_FOLDER = Path("data") / "images"
