@@ -1,12 +1,11 @@
 import numpy as np 
 from numpy.typing import NDArray
-import matplotlib.pyplot as plt
 from skimage.io import imread, imsave
 from scipy.signal import convolve2d
 from scipy.fft import fft2, ifft2, ifftshift 
 
 
-from const import * 
+from const import OUTPUT_FOLDER, IMAGES_FOLDER
 
 def gaussian_kernel(size: int, sigma: float) -> NDArray:
     """Generates a 2D Gaussian kernel."""
@@ -29,12 +28,10 @@ def lsi_degrade(image: NDArray, kernel: NDArray, noise_image: NDArray) -> NDArra
 
 def direct_inverse_filtering(degraded_image:NDArray, kernel:NDArray) -> NDArray:
     G = fft2(degraded_image)
-
     H = fft2(ifftshift(kernel), s=degraded_image.shape)
-    
     if np.any(H == 0):
-        print("Warning: Kernel has zero values in the frequency domain, which may lead to instability in inverse filtering.")
-        H[H == 0] = 1e-10  # Avoid division by zero by adding a small constant
+         # Avoid division by zero by adding a small constant to zero entries
+        H[H == 0] = 1e-10 
     F = G / H 
     restored_image = np.real(ifft2(F)) 
 
@@ -65,7 +62,6 @@ if __name__ == "__main__":
     noise_3 = np.random.normal(loc=0, scale=55, size=image.shape)
 
     gauss_kernel = gaussian_kernel(size=15, sigma=2)
-
     cam_kernel = camera_blur_kernel(size=15)
     
 
