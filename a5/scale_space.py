@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from numpy.typing import NDArray
 from typing import Any
 
@@ -96,7 +95,7 @@ def make_gaussian_blob(
 
 if __name__ == "__main__":
     from const import OUTPUT_FOLDER
-    from plotting import plot_tau_range
+    from plotting import plot_tau_range, plot_scale_space_comp
 
     OUTPUT_FOLDER.mkdir(parents=False, exist_ok=True)
 
@@ -106,7 +105,7 @@ if __name__ == "__main__":
     SIGMA_COMBINED = np.sqrt(SIGMA_B**2 + TAU**2)
 
     GRID_HALF_EXTENT = 20
-    GRID_SIZE = 201   # odd. origin is exactly centred
+    GRID_SIZE = 201 # odd. origin is exactly centred
     TAU_VALUES = [0.5, 1.0, 2.0, 4.0, 8.0]
 
     # Part 1 – construct the base blob B(x, y) = G(x, y, σ=1)
@@ -145,45 +144,11 @@ if __name__ == "__main__":
         grid_size=GRID_SIZE,
     )
 
-    diff = A - C
-
-    print(f"Max absolute difference |A − C|: {np.abs(diff).max():.2e}")
-    print(f"Mean absolute difference |A − C|: {np.abs(diff).mean():.2e}")
-
-    # Shared colour scale for A and C so they are visually comparable
-    vmin = min(A.min(), C.min())
-    vmax = max(A.max(), C.max())
-
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(12, 4))
-
-    extent = [-GRID_HALF_EXTENT, GRID_HALF_EXTENT, -GRID_HALF_EXTENT, GRID_HALF_EXTENT]
-
-    im0 = axes[0].imshow(A, cmap="gray", vmin=vmin, vmax=vmax, extent=extent)
-    axes[0].set_title(f"A = B(σ={SIGMA_B}) * G(τ={TAU})")
-    axes[0].set_xlabel("x")
-    axes[0].set_ylabel("y")
-    plt.colorbar(im0, ax=axes[0], fraction=0.046)
-
-    im1 = axes[1].imshow(C, cmap="gray", vmin=vmin, vmax=vmax, extent=extent)
-    axes[1].set_title("C = G(x,y, √(σ²+τ²))")
-    axes[1].set_xlabel("x")
-    plt.colorbar(im1, ax=axes[1], fraction=0.046)
-
-    im2 = axes[2].imshow(
-        diff, cmap="gray", vmin=vmin, vmax=vmax, extent=extent
+    plot_scale_space_comp(
+        A=A,
+        C=C,
+        grid_half_extent=GRID_HALF_EXTENT,
+        sigma=SIGMA_B,
+        tau=TAU,
+        output_path = OUTPUT_FOLDER / "4_1_verification.png",
     )
-    axes[2].set_title("Difference A − C")
-    axes[2].set_xlabel("x")
-    plt.colorbar(im2, ax=axes[2], fraction=0.046)
-
-    fig.suptitle(
-        "Verification of G(σ) ∗ G(τ) = G(√(σ²+τ²))  [eq. 1]",
-        y=1.02,
-    )
-    for i in range(3):
-        # remove x and y axis ticks 
-        axes[i].set_xticks([])
-        axes[i].set_yticks([])
-    plt.tight_layout()
-    plt.savefig(OUTPUT_FOLDER / "4_1_verification.png", bbox_inches="tight", dpi=150)
-    plt.close()
