@@ -2,7 +2,7 @@ import numpy as np
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
 from scipy.fft import fft 
-from const import * 
+from const import OUTPUT_FOLDER, SAMPLES_FOLDER 
 import soundfile as sf
 
 def spectogram(signal: NDArray, sample_rate: int, window_size: int, readable: bool = True) -> plt:
@@ -11,11 +11,11 @@ def spectogram(signal: NDArray, sample_rate: int, window_size: int, readable: bo
     for i in range(0, len(signal) - window_size, stride):
         windowed_signal = signal[i:i+window_size] 
         spectrum = np.abs(fft(windowed_signal))
-        spectrogram.append(spectrum[:window_size//2])  # Keep only the positive frequencies
+        spectrogram.append(spectrum[:window_size//2])  
 
     bin_width = sample_rate / window_size
     duration = len(signal) / sample_rate
-    max_freq = sample_rate / 2  # Nyquist frequency
+    max_freq = sample_rate / 2  
 
     plt.figure(figsize=(10, 6))
     if readable:
@@ -48,7 +48,11 @@ if __name__ == "__main__":
     progression_sound = sf.read(SAMPLES_FOLDER / "progression.wav")
     sample_rate = progression_sound[1]
     spec = spectogram(progression_sound[0], sample_rate= sample_rate, window_size=1024, readable=True)
-    plt.savefig(output / "spectrogram_readable.png")
+    plt.savefig(output / "spectrogram_readable_W_1024.png")
+    spec = spectogram(progression_sound[0], sample_rate= sample_rate, window_size=512, readable=True)
+    plt.savefig(output / "spectrogram_readable_W_512.png")
+    spec = spectogram(progression_sound[0], sample_rate= sample_rate, window_size=2048, readable=True)
+    plt.savefig(output / "spectrogram_readable_W_2048.png")
 
     spec = spectogram(progression_sound[0], sample_rate= sample_rate, window_size=1024, readable=False)
-    plt.savefig(output / "spectrogram_unreadable.png")
+    plt.savefig(output / "spectrogram_unreadable_W_1024.png")
