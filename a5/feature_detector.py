@@ -11,7 +11,7 @@ def harris_corners(image: NDArray, N: int, savepath:str) -> None:
     if image.ndim != 2:
         image = np.mean(image, axis=-1)  # Convert to grayscale if it's RGB
     # Compute Harris corner response map
-    harris_response = corner_harris(image, sigma= 3, k = 0.01)
+    harris_response = corner_harris(image, sigma= 3, k = 0.1)
 
     # Find local maxima (corners), keeping only the N strongest
     corners = corner_peaks(
