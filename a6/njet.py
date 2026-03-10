@@ -12,6 +12,7 @@ def gaussian_filter_bank(size: int, sigma: NDArray[np.float64]) -> NDArray:
     xx, yy = np.meshgrid(ax, ax)
     #base
     G = np.exp(-(xx**2 + yy**2) / (2. * sigma**2))  # base, unnormalized
+    G = G/G.sum()
 
     #sigma**order to ensure the same scale across different orders of derivatives. 
     #see slide 46 in scalespace.pdf 
@@ -40,7 +41,7 @@ def make_and_plot_filter_bank(size:int, sigma:int,labels:list)-> list:
     filters = gaussian_filter_bank(size, sigma)
     
 
-    plot_pyramid(images = filters, labels = labels, title = f"3-jet Gaussian filter bank for sigma = {sigma}", savepath = OUTPUT_FOLDER / f"gaussian_filter_bank_sigma_{sigma}.png")
+    plot_pyramid(images = filters, labels = labels, title = fr"3-jet Gaussian filter bank for $\sigma=$", savepath = OUTPUT_FOLDER / f"gaussian_filter_bank_sigma_{sigma}.png")
     return filters
 
 
@@ -50,7 +51,7 @@ def apply_filter_bank_and_plot(image: NDArray, filter_bank: list, labels: list, 
         filtered = convolve2d(image, kernel, mode='same', boundary='wrap')
         filtered_images.append(filtered)
 
-    plot_pyramid(images = filtered_images, labels = labels, title = f"Filtered images with 3-jet Gaussian filter bank sigma {sigma}", savepath = OUTPUT_FOLDER / f"filtered_images_sigma_{sigma}.png")
+    plot_pyramid(images = filtered_images, labels = labels, title = rf"Filtered images with 3-jet Gaussian filter bank $\sigma=${sigma}", savepath = OUTPUT_FOLDER / f"filtered_images_sigma_{sigma}.png")
     return filtered_images
 
 
@@ -58,11 +59,12 @@ def apply_filter_bank_and_plot(image: NDArray, filter_bank: list, labels: list, 
 if __name__ == "__main__":
     SIZE = 25 
     LABELS = [
-        ["G"],
-        ["Gx", "Gy"],
-        ["Gxx", "Gxy", "Gyy"],
-        ["Gxxx", "Gxxy", "Gxyy", "Gyyy"]
-    ]
+    [r"$G$"],
+    [r"$\frac{\partial}{\partial x} G$", r"$\frac{\partial}{\partial y} G$"],
+    [r"$\frac{\partial}{\partial x^2} G$", r"$\frac{\partial}{\partial xy} G$", r"$\frac{\partial}{\partial y^2} G$"],
+    [r"$\frac{\partial}{\partial x^3} G$", r"$\frac{\partial}{\partial x^2y} G$", r"$\frac{\partial}{\partial xy^2} G$", r"$\frac{\partial}{\partial y^3} G$"]
+]
+    
     sigma_values = [1, 3, 5] 
     filter_banks = []
     for sigma in sigma_values:
