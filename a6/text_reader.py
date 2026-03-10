@@ -17,13 +17,12 @@ def automatic_rotation(image:NDArray) -> NDArray:
     #Preprocess the image by thresholding to enhance corner detection 
 
 
-    image_th = np.where(image > 140, 255, 0).astype(np.uint8)
 
-    filled_image = closing(image_th, disk(30))
+    filled_image = closing(image, disk(30))
 
     image_th = np.where(filled_image > 140, 255, 0).astype(np.uint8)
 
-    harris_response = corner_harris(image_th, sigma= 50, k=0.1)
+    harris_response = corner_harris(image_th, sigma= 55, k=0.1)
     corners = corner_peaks(
         harris_response,
         num_peaks=2, min_distance=70
@@ -56,7 +55,8 @@ def automatic_rotation(image:NDArray) -> NDArray:
 
     rotated_image = rotate(rotated_image, -90, preserve_range=True, resize = True).astype(np.uint8)
 
-    rotated_image = np.where(rotated_image > 140, rotated_image, 0).astype(np.uint8)
+    rotated_image = np.where(rotated_image > 140, 255, 0).astype(np.uint8)
+
     return rotated_image
 
 if __name__ == "__main__":
