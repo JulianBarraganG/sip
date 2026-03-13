@@ -1,9 +1,10 @@
 import numpy as np 
 from skimage.io import imread
-from scipy.signal import convolve2d
+from scipy.signal import fftconvolve
 from numpy.typing import NDArray
 from pyramid_plots import plot_pyramid
 from const import OUTPUT_FOLDER, IMAGES_FOLDER
+
 
 def gaussian_filter_bank(size: int, sigma: NDArray[np.float64]) -> NDArray:
     """Generates a 3-jet gaussian filter bank of the specified size and sigma values."""
@@ -38,41 +39,90 @@ def gaussian_filter_bank(size: int, sigma: NDArray[np.float64]) -> NDArray:
 
 def make_and_plot_filter_bank(size:int, sigma:int,labels:list)-> list: 
     filters = gaussian_filter_bank(size, sigma)
-    
 
-    plot_pyramid(images = filters, labels = labels, title = fr"3-jet Gaussian filter bank for $\sigma=$", savepath = OUTPUT_FOLDER / f"gaussian_filter_bank_sigma_{sigma}.png")
+    plot_pyramid(
+        images = filters,
+        labels = labels,
+        title = fr"3-jet Gaussian filter bank for $\sigma={sigma}$",
+        savepath = OUTPUT_FOLDER / f"gaussian_filter_bank_sigma_{sigma}.png"
+    )
+
     return filters
 
 
-def apply_filter_bank_and_plot(image: NDArray, filter_bank: list, labels: list, sigma:int) -> list:
+def apply_filter_bank_and_plot(
+    image: NDArray, filter_bank: list, labels: list, sigma:int
+) -> list:
     filtered_images = []
-    for kernel in filter_bank:
-        filtered = convolve2d(image, kernel, mode='same', boundary='wrap')
+    for kernel in tqdm(filter_bank, desc="Filtering with N-Jet filters"):
+        filtered = fftconvolve(image, kernel, mode="same")
         filtered_images.append(filtered)
 
-    plot_pyramid(images = filtered_images, labels = labels, title = rf"Filtered images with 3-jet Gaussian filter bank $\sigma=${sigma}", savepath = OUTPUT_FOLDER / f"filtered_images_sigma_{sigma}.png")
+    plot_pyramid(
+        images = filtered_images,
+        labels = labels,
+        title = fr"Filtered images with 3-jet Gaussian filter bank $\sigma=${sigma}",
+        savepath = OUTPUT_FOLDER / f"filtered_images_sigma_{sigma}.png"
+    )
+
     return filtered_images
 
 
-
 if __name__ == "__main__":
+    from plotting import plot_kmeans_segmentation
+    from tqdm import tqdm
     SIZE = 25 
     LABELS = [
-    [r"$G$"],
-    [r"$\frac{\partial}{\partial x} G$", r"$\frac{\partial}{\partial y} G$"],
-    [r"$\frac{\partial}{\partial x^2} G$", r"$\frac{\partial}{\partial xy} G$", r"$\frac{\partial}{\partial y^2} G$"],
-    [r"$\frac{\partial}{\partial x^3} G$", r"$\frac{\partial}{\partial x^2y} G$", r"$\frac{\partial}{\partial xy^2} G$", r"$\frac{\partial}{\partial y^3} G$"]
-]
+        [r"$G$"],
+        [
+            r"$\frac{\partial}{\partial x} G$",
+            r"$\frac{\partial}{\partial y} G$",
+        ],
+        [
+            r"$\frac{\partial}{\partial x^2} G$",
+            r"$\frac{\partial}{\partial xy} G$",
+            r"$\frac{\partial}{\partial y^2} G$",
+        ],
+        [
+            r"$\frac{\partial}{\partial x^3} G$",
+            r"$\frac{\partial}{\partial x^2y} G$",
+            r"$\frac{\partial}{\partial xy^2} G$",
+            r"$\frac{\partial}{\partial y^3} G$",
+        ]
+    ]
     
     sigma_values = [1, 3, 5] 
     filter_banks = []
     for sigma in sigma_values:
         filter_banks.append(make_and_plot_filter_bank(SIZE, sigma, LABELS))
 
+    all_responses = {}
     for idx, filter_bank in enumerate(filter_banks):
         image = imread(IMAGES_FOLDER / "sunandsea.jpg", as_gray=True)
-        apply_filter_bank_and_plot(image, filter_bank, LABELS, sigma_values[idx])
+        all_responses[sigma_values[idx]] = apply_filter_bank_and_plot(
+            image, filter_bank, LABELS, sigma_values[idx]
+        )
 
-    
 
-   
+    # Part 3.3
+    from sklearn.cluster import KMeans
+    import numpy as np
+
+    # Use only sigma=5 filter bank (last one in filter_banks, since sigma_values = [1, 3, 5])
+    image = imread(IMAGES_FOLDER / "sunandsea.jpg", as_gray=True)
+
+    # Build feature matrix (H*W, 10)
+    H, W = image.shape
+    feature_matrix = np.stack(all_responses[sigma_values[-1]], axis=-1).reshape(H * W, -1)
+
+    # K-means clustering
+    kmeans = KMeans(n_clusters=3, random_state=42)
+    labels = kmeans.fit_predict(feature_matrix)
+    segmentation = labels.reshape(H, W)
+
+    plot_kmeans_segmentation(
+        image,
+        segmentation,
+        save_path=OUTPUT_FOLDER / "segmentation_njet.png",
+        title="N-Jet Filter Bank Segmentation (K=3, σ=5)"
+    )

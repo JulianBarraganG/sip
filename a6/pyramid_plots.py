@@ -27,7 +27,7 @@ def plot_pyramid(images: list, labels: list, title: str, savepath: Path, cmap: s
             ax.text(0.5, -0.15, labels[row][i], fontsize=14, ha='center', transform=ax.transAxes)
             img_idx += 1
 
-    fig.suptitle(title, fontsize=18)
+    fig.suptitle(title, fontsize=24)
     plt.tight_layout()
     plt.savefig(savepath)
     plt.close()
