@@ -1,5 +1,4 @@
 import numpy as np 
-import matplotlib.pyplot as plt
 from skimage.io import imread
 from scipy.signal import convolve2d
 from numpy.typing import NDArray
