@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
 from scipy import ndimage
+from skimage.color import rgb2gray
 import numpy as np
+from numpy.typing import NDArray
+from typing import Any
+from pathlib import Path
 
 
 def plot_open_close(original, closed, opened, save_path):
@@ -39,5 +43,40 @@ def plot_overlay_labels(image, labels, save_path):
 
     ax.axis("off")
     plt.tight_layout()
+    plt.savefig(save_path)
+    plt.close()
+
+
+def plot_w_and_wo_color(image: NDArray, title: str, save_path: Path) -> None:
+    fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+    ax[0].imshow(image)
+    ax[0].set_title(f"{title} (color)", fontsize=20)
+    ax[0].axis("off")
+    ax[1].imshow(rgb2gray(image), cmap="gray")
+    ax[1].set_title(f"{title} (grayscale)", fontsize=20)
+    ax[1].axis("off")
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.close()
+
+def plot_histogram(
+    img: NDArray[np.uint8],
+    img_name: str,
+    save_path: Path,
+    threshold: float | None = None,
+) -> None:
+    assert img.ndim == 2, "Input image must be grayscale"
+    plt.hist(img.ravel(), bins=256, range=(0, 255), label="Histogram of Grayscale Image")
+    # Plot a vertical dotted line at x=100
+    if threshold is not None:
+        plt.axvline(x=threshold, color="r", linestyle="--", label=f"Threshold={threshold:.2f}")
+    title = f"Histogram of Grayscale Image {img_name}"
+    title += "with Otsu Threshold" if threshold is not None else ""
+    plt.title(f"Histogram of Grayscale Image '{img_name}'", fontsize=14)
+    plt.legend()
+    plt.xlabel("Pixel Intensity")
+    plt.ylabel("Frequency")
+    plt.xlim(0, 255)
+    plt.grid()
     plt.savefig(save_path)
     plt.close()
