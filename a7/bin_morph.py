@@ -24,6 +24,6 @@ if __name__ == "__main__":
     image = imread(IMAGES_FOLDER / "matrikelnumre_nat.png")
     gray_img = rgb2gray(image)
     bin_img = segmentation_otsu(gray_img)
-    closed_img = close_bin(bin_img, radius=20)
+    closed_img = close_bin(bin_img, radius=15)
     output = (closed_img * 255).astype(np.uint8)
     imsave(out / "binary_closed.png", output)

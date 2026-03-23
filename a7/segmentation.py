@@ -28,7 +28,6 @@ if __name__ == "__main__":
         threshold = threshold_otsu(rgb2gray(img)) * 255
         gray_img = rgb2gray(img)
         gray_img_u8 = (gray_img * 255).astype(np.uint8)
-        plot_histogram(gray_img_u8, stem, out / f"{stem}_histogram.png")
         plot_histogram(gray_img_u8, stem, out / f"{stem}_histogram_w_thresh.png", threshold)
         plot_w_and_wo_color(img, title, out / f"{stem}_derp_plot.png")
         segmented_img = (segmentation_otsu(gray_img) * 255).astype(np.uint8)

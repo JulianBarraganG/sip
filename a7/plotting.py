@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def plot_open_close(original, closed, opened, save_path):
-    fig, axes = plt.subplots(1, 3, figsize=(10, 5))
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     axes[0].imshow(original, cmap="gray")
     axes[0].set_title("Original Image")
     axes[0].axis("off")
@@ -23,8 +23,8 @@ def plot_open_close(original, closed, opened, save_path):
     plt.close()
 
 
-def plot_overlay_labels(image, labels, save_path):
-    fig, ax = plt.subplots()
+def plot_overlay_labels(image, labels, save_path, fontsize=14):
+    fig, ax = plt.subplots(figsize=(15, 15))
     ax.imshow(image, cmap="gray")
 
     # For each unique label (skip 0 if it's background)
@@ -37,8 +37,8 @@ def plot_overlay_labels(image, labels, save_path):
           cy, cx = ndimage.center_of_mass(mask)
 
           ax.text(cx, cy, str(label_id),
-                  color="red", fontsize=10, fontweight="bold",
-                  ha="center", va="center",
+                  color="red", fontsize=fontsize, fontweight="bold",
+                  ha="center", va="center", alpha=0.9,
         )
 
     ax.axis("off")
@@ -47,7 +47,7 @@ def plot_overlay_labels(image, labels, save_path):
     plt.close()
 
 
-def plot_w_and_wo_color(image: NDArray, title: str, save_path: Path) -> None:
+def plot_w_and_wo_color(image: NDArray[Any], title: str, save_path: Path) -> None:
     fig, ax = plt.subplots(1, 2, figsize=(10, 5))
     ax[0].imshow(image)
     ax[0].set_title(f"{title} (color)", fontsize=20)
@@ -66,17 +66,20 @@ def plot_histogram(
     threshold: float | None = None,
 ) -> None:
     assert img.ndim == 2, "Input image must be grayscale"
-    plt.hist(img.ravel(), bins=256, range=(0, 255), label="Histogram of Grayscale Image")
+    plt.hist(img.ravel(), bins=256, range=(0, 255), label="Pixel Intensity Distribution")
     # Plot a vertical dotted line at x=100
     if threshold is not None:
-        plt.axvline(x=threshold, color="r", linestyle="--", label=f"Threshold={threshold:.2f}")
+        plt.axvline(
+            x=threshold, color="r", linestyle="--", label=f"Threshold={threshold:.2f}"
+        )
     title = f"Histogram of Grayscale Image {img_name}"
     title += "with Otsu Threshold" if threshold is not None else ""
     plt.title(f"Histogram of Grayscale Image '{img_name}'", fontsize=14)
-    plt.legend()
+    plt.legend(bbox_to_anchor=(1.1, 1), loc="upper right")
     plt.xlabel("Pixel Intensity")
     plt.ylabel("Frequency")
     plt.xlim(0, 255)
+    plt.ylim(0, 110000)
     plt.grid()
     plt.savefig(save_path)
     plt.close()
