@@ -32,6 +32,7 @@ def normalized_laplacian_stack(
         Iyy = gaussian_filter(image, sigma=tau, order=(2, 0))
         H = tau**2 * (Ixx + Iyy)
         stack.append(H)
+
     return np.array(stack)
 
 
