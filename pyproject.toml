@@ -14,3 +14,10 @@ dependencies = [
     "soundfile>=0.13.1",
     "tqdm>=4.67.3",
 ]
+
+[tool.setuptools.packages.find]
+include = ["a1*", "a3*", "a5*", "a6*", "a7*", "a8*"]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
