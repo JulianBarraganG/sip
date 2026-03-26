@@ -4,6 +4,11 @@ from scipy.signal import convolve2d
 
 
 def white_square(size: int) -> NDArray[np.uint8]:
+    """
+    Input parameter `size` is the size of the output image,
+    and the square will be centered in the output image,
+    with its side length being half of the output image size.
+    """
     if size % 2 == 0:
         size += 1
     img = np.zeros((size, size), dtype=np.uint8)

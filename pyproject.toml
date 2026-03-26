@@ -5,13 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "keras>=3.13.2",
     "matplotlib>=3.10.8",
     "numpy>=2.4.2",
+    "polars>=1.39.3",
     "pyqt5>=5.15.11",
     "scikit-image>=0.26.0",
     "scikit-learn>=1.8.0",
     "scipy>=1.17.0",
     "soundfile>=0.13.1",
+    "tensorflow[and-cuda]>=2.21.0",
     "tqdm>=4.67.3",
 ]
 
