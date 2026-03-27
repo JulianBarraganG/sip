@@ -59,7 +59,7 @@ def trs(
 
 if __name__ == "__main__":
     from a6.transform import white_square
-    import matplotlib.pyplot as plt
+    from a8.plotting import plot_square_vs_transformed
     from const import OUTPUT_FOLDER
 
     SIZE = 201
@@ -67,11 +67,4 @@ if __name__ == "__main__":
 
     # Apply the function on the square image
     transformed_img = trs(sq_img, t=(10.4, 15.7), theta=np.pi/10, scale=2)
-    fig, ax = plt.subplots(figsize=(6, 6))
-    plt.imshow(transformed_img, cmap="gray")
-    plt.title(r"Transformation: $T_tT_cRST_c^{-1}$ on White Square Image")
-    plt.axis("off")
-    plt.savefig(OUTPUT_FOLDER / "transformed image")
-    plt.close()
-
-    print(r"\n")
+    plot_square_vs_transformed(sq_img, transformed_img, OUTPUT_FOLDER / "transformed_image.png")

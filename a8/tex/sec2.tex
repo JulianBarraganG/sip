@@ -1,0 +1,114 @@
+\section{} % 2
+
+\subsection{} % 2.1
+The following is the full algorithm implementation of the Procrustes algorithm:
+
+\begin{lstlisting}
+def procrustes(S: NDArray[Any], target: NDArray[Any]) -> NDArray[Any]:
+    M, d, N = S.shape
+    assert d == 2, "Only 2D coordinates are supported in this implementation."
+    assert target.shape == (2, N), (
+        f"Target shape must be (2, N)={(2, N)}, but got {target.shape}."
+    )
+
+    ### Translate all coordinates to origo
+    x_center = S[:, 0, :].mean(axis=1, keepdims=True)  # shape (182, 1)
+    y_center = S[:, 1, :].mean(axis=1, keepdims=True)  # shape (182, 1)
+
+    centered = S.copy()
+    centered[:, 0, :] -= x_center  # broadcasts across 32 landmarks
+    centered[:, 1, :] -= y_center
+    target -= target[0].mean(axis=0)  # Center the target as well
+    target -= target[1].mean(axis=0)  # Center the target as well
+
+    ### Scale all of them w.r.t. target
+    enum = np.sum(centered * target, axis=(1, 2))
+    denom = np.sum(centered * centered, axis=(1, 2))
+    # Check for 0 division
+    if np.any(denom == 0):
+        print(
+            "WARNING: Some shapes have zero variance. "
+            "To avoid division by zero, 0-s are set to 1.0"
+        )
+    denom = np.where(denom == 0, 1.0, denom)  # avoid division by zero
+    s = enum / denom  # shape (M,)
+
+    ### Rotate them all w.r.t. target
+    output = centered * s[:, np.newaxis, np.newaxis]  # broadcast over (2, 32)
+    for i in range(M):
+        other = output[i]
+        R = get_rotation(target, other)
+        output[i] = R @ other
+
+    return output
+\end{lstlisting}
+where the \lstinline{get_rotation()} function is as following:
+% ROTATION FUNCTION
+\begin{lstlisting}
+def get_rotation(target: NDArray[Any], other: NDArray[Any]) -> NDArray[Any]:
+    A = other @ target.T
+    U, _, Vt = np.linalg.svd(A)
+    V = Vt.T
+    return V @ U.T
+\end{lstlisting}
+
+This particular implementation is limited to aligning $2D$ shapes.
+The function asserts correct inputs, applies the centering by leveraging \texttt{numpy} broadcasting,
+and similarly scales by leveraging broadcasting. 
+Essentially the function computes the sum of the dot products as prescribed by the algorithm,
+but does so by element-wise multiplication and summation across the appropriate axes.
+The result is an $M$-dimensional vector with $M$ scaling factors, one for each shape.
+Finally we apply rotation on every input, by computing the optimal rotation matrix using the 
+SVD of the cross-covariance matrix between the target and the scaled shape.
+
+The resulting aligned shapes are shown in \autoref{fig:10wings}:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{ass8/10_wings.png}
+	\caption{10 Wing Shapes given by 32 landmarks, aligned using the Procrustes algorithm.}
+	\label{fig:10wings}
+\end{figure}
+which demonstrates that the algorithm successfully aligns the shapes.
+
+
+
+\subsection{} % 2.2
+
+The (favorite) classifier chosen is a Support Vector Machine (SVM).
+Technically the SVM provides optimal separating hyperplane between classes of data points,
+and by evaluating the sign of the decision function for a given point relative to that boundary
+it becomes a classifier.
+
+For this particular task, with $2\times 32$ landmarks making up $n=64$ features,
+the choice of kernel seems to be a linear kernel.
+Typically, with geometric data such as this, which have such concrete geometric meaning,
+we expect distinct races to have inter-race linearly seperable distinctions.
+
+We achieve the following results:
+\begin{itemize}
+	\item Unaligned Accuracy: $0.8228$
+	\item Aligned Accuracy: $0.9367$
+\end{itemize}
+which illustrates a clear improvement in performance.
+This is likely due to Procrustes alignment serving as a form of data normalization 
+i.e. alignment in terms of center, scale, and orientation.
+
+This makes the classifier more robust to e.g. outliers, which may have completely different orientation,
+or overblown scale. What we saw in figure \ref{fig:10wings} wasn't directly an outlier,
+but indeed we saw the inpact of alignment. The accuracy result seems to reflect, that such alignment
+makes it easier for the SVM with linear kernel to find 15 separating hyperplanes to distinguish between the 15 different species.
+\footnote{Each hyperplane is a One-vs-Rest hyperplane, making up 15 in total.}
+
+\subsection{} % 2.3
+
+We very concretely removed the spatial orientation, size, and position information when performing Procrustes alignment on the dataset.
+What we kept are the relative spatial relationships between the 32 landmarks.
+The assumption is, that what matters is the shape. Its particular features and characteristics should be rotation, scale, and translation invariant.
+
+Even though we saw improved accuracy performance between unaligned and aligned training data onto test data,
+without better domain knowledge we can't be sure that e.g. size plays a crucial role in determining the species.
+The improved performance in terms of accuracy led us to believe that these alignments removed
+some factors that acted as noise rather than signal, in order to classify the species.
+However it is important to be cognisant of what we are giving up, and consider whether these
+could in fact be relevant or even crucial in solving the task at hand e.g. species classification.

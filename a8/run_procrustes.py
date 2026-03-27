@@ -37,7 +37,7 @@ if __name__ == "__main__":
     # Unaligned
     X_unaligned_train, X_unaligned_test = X.to_numpy(), X_test.to_numpy()
     Y_train, Y_test = Y.to_numpy().ravel(), Y_test.to_numpy().ravel()
-    svm_unaligned = SVC(kernel="linear")
+    svm_unaligned = SVC(kernel="linear", random_state=42)
     svm_unaligned.fit(X_unaligned_train, Y_train)
     preds = svm_unaligned.predict(X_unaligned_test)
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     X_aligned_test = X_aligned_test.reshape(M, DIMS*N)
 
     # Train SVM
-    svm_aligned = SVC(kernel="linear")
+    svm_aligned = SVC(kernel="linear", random_state=42)
     svm_aligned.fit(X_aligned_train, Y_train)
     aligned_preds = svm_aligned.predict(X_aligned_test)
     print(f"Aligned Accuracy: {accuracy_score(Y_test, aligned_preds):.4f}")

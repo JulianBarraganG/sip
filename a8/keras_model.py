@@ -39,4 +39,4 @@ model.compile(optimizer=optimizer,
              metrics=["accuracy"])
 
 ## Load the pretrained network
-model.load_weights(DATA_FOLDER / "keras_model.h5") 
+model.load_weights(DATA_FOLDER / "keras_model.h5")

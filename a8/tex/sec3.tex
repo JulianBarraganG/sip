@@ -1,0 +1,178 @@
+\section{} % 3
+
+\subsection{} % 3.1
+
+In patch-based machine learning we do segmentation by training a fixed size kernel
+of size $k \times k$, which given a patch of some target image of the same size,
+outputs typically a single value, which is the predicted class of the central pixel of the patch.
+
+Given some data set $(X, Y)$ of images and labels, we can divide this into a test and a training set.
+The training and test set are then some ratio of the total data set, often 80\% and 20\% respectively.
+For patch-based machine learning we would ideally have then that $X$ is a set of
+image patches from the training images, and $Y$ are segmented patches -- i.e. labels -- for the central pixel of each patch.
+In any case the training and test data is some split which contains raw data and labels.
+
+Segmentation methods which do not rely on learning, have the advantages of first of all being
+much less computationally expensive (both memory and time),
+and typically they are much more humanly interpretable than, say, black box deep learning neural networks.
+Non-learning based methods are typically based on assumptions and insights about the data,
+and they tend to perform great on simple segmentation tasks.
+But for complex segmentation tasks, the scalability of the neural networks, alongside their
+non-linearity, allow these to learn much more complex patterns in data.
+So albeit at the greatly increased risk of overfitting, learning-based methods 
+are typically much more powerful than non-learning based methods for complex segmentation tasks.
+
+
+\subsection{} % 3.2
+
+By loading in the model as instructed, and using the method \texttt{model.evaluate}
+on the test data, we obtain an accuracy of $0.9577$.
+This means that the mean accuracy of the predicted labels at each pixel,
+across all the images in the test set, is about said value.
+
+We typically report the evaluation scores on the test set, which the model has not been trained on,
+to get a sense of the models ability to generalize to unseen data.
+\footnote{
+	Note that depending on the data set, a simple train/test split is not enough to
+	convey any meaningful indication of generalization, since a data set may have a strong
+	bias relative to the set of all possible data points.
+}
+Given this accuracy, we expect the model to be able to do segmentations on unseen data to some extent,
+but not perfectly and potentially with even less accuracy.
+
+
+\subsection{} % 3.3
+
+First we write a function to extract the patches from an image:
+
+\begin{lstlisting}
+def extract_patches(
+    image: NDArray[np.uint16], k_size: int = 29
+) -> NDArray[np.float32]:
+    W, H = image.shape
+    assert k_size % 2 == 1, "Kernel size must be odd i.e. have a single center."
+    pad = k_size // 2
+    padded_img = np.pad(
+        image, pad, mode="constant", constant_values=0
+    ).astype(np.float32)
+    # Shape (N, 29, 29, 1) to match the model's expected input
+	# Where N = W * H is the total number of pixels in the original image
+    patches = np.zeros((W * H, k_size, k_size, 1), dtype=np.float32)
+    
+    k = 0
+    for i in range(H):
+        for j in range(W):
+            patch = padded_img[i : i + k_size, j : j + k_size] / 255.
+            patches[k, :, :, 0] = patch
+            k += 1
+
+    return patches
+\end{lstlisting}
+
+This function takes a grayscale image and an (uneven) kernel size $k$,
+and returns a $k \times k$ patch for each pixel in the original image.
+To achieve this we do zero-padding of the original image by $\lfloor k/2 \rfloor$ pixels on each side.
+We then simply extract the $k \times k$ patches by iterating over the original image and slicing the padded image accordingly.
+We plot the original image and predicted semgentation for a single image in the test set in figure \ref{fig:og_v_pseg}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{ass8/1128_vs_predicted_seg.png}
+	\caption{Original image (left) and predicted segmentation (right) for image 1128 of the \texttt{test\_images}.}
+	\label{fig:og_v_pseg}
+\end{figure}
+
+In this figure \ref{fig:og_v_pseg} the segmentation mask consist of 58 different classes,
+which are represented by different colors using the \texttt{matplotlib.pyplot.get\_cmap("nipy\_spectral")} colormap.
+
+\subsection{} % 3.4
+
+%3.4. (1 point) Load the ground truth segmentation for your test image (in test_images/seg).
+% Write a function to evaluate the Dice coefficient against your predicted segmen-
+% tation.
+% Deliverables: Include the code for your function in the report. Use the func-
+% tion to report the mean Dice coefficient computed over all classes.
+
+We load in the true segmentation, which we for visual comparisons sake also plot in figure \ref{fig:tseg_v_pseg}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{ass8/true_vs_pred_mask.png}
+	\caption{True segmentation (left) and predicted segmentation (right) for image 1128 of the \texttt{test\_images}.}
+	\label{fig:tseg_v_pseg}
+\end{figure}
+
+In order to calculate the Dice coefficient, we write the following function:
+
+\begin{lstlisting}
+def dice_score(
+    y_true: NDArray[np.float32],
+    y_pred: NDArray[np.float32],
+    num_classes: int = 135,
+) -> list[Any]:
+    dice_scores = []
+    for i in range(num_classes):
+        true_class = (y_true == i)
+        pred_class = (y_pred == i)
+        
+        intersection = np.logical_and(true_class, pred_class).sum()
+        total_pixels = true_class.sum() + pred_class.sum()
+        
+        # Only compute dice if the class exists in either the truth or the prediction
+        if total_pixels > 0:
+            dice = (2.0 * intersection) / total_pixels
+            dice_scores.append(dice)
+            
+    return dice_scores
+\end{lstlisting}
+
+Which takes the true and predicted segmentation masks of a single image, and computes the Dice coefficient for each class.
+This is achieved by iterating over each possible class, creating boolean masks which then allows us to use the 
+\texttt{numpy.logical\_and} function
+\footnote{
+	One could've used numpy broadcasting and multiplied the two together just as well.
+	The logical and is more high level readable in conveying the operation performed.
+}
+to compute the intersection of the true and predicted class masks.
+Summing this intersection is possible, due to the underlying 0-s and 1-s representation of boolean values.
+Finally we compute the Dice coefficient using the formula $2 \cdot \text{intersection} / \text{total\_pixels}$,
+and we only compute this if there are any pixels in either mask, since we are not interested
+in 135 scores each time, but rather $max(|X|, |Y|)$ total dice coefficients.
+The mean is obtained by \lstinline{np.mean(dice\_scores(y\_true, y\_pred))}.
+
+When running it on the segmentation mask of 1128 along with the predicted segmentation mask of 1128 
+- as seen in figure \ref{fig:tseg_v_pseg} - we obtain a mean Dice coefficient of $0.2085$.
+
+This is a bad score, reflecting the clear discrepancy seen between masks in figure \ref{fig:tseg_v_pseg}.
+
+It is reasonable to conclude that the model is capable of achieving high mean accuracy on pixel-wise classifications,
+but that this does not necessarily translate to good segmentation performance.
+For instance a very dominant class in either data set is the background class,
+which is the most common class in both the true and predicted segmentation masks,
+making up a large portion of positives and making true positives easier to achieve for the model.
+
+Another conceivable issue with the model, is its limited field of vision.
+It can only every look at patches of size $29\times 29$ losing a lot of spatial information.
+For instance, there might be some classes that only occur in the bottom right of the brain,
+but this spatial information is not available to the model.
+This is a crucial limitation of patch-based segmentation models.
+However these are mostly speculations, and would require further analysis of the data and results to make concrete deductions.
+
+\subsection{} % 3.5
+
+By making some up-scaling path in the architecture, we could potentially go from predicting a single pixel label
+per model evaluation -- requiring $256^2=65536$ model evaluations for a single $256 \times 256 $ image
+-- to predicting all $29^2=841$ per model evaluation.
+Augmenting the model will significantly strain the memory requirements. Currently the model has
+about $1.8$ million parameters, which would be significantly inflated.
+However on the flipside we would only need to do $\frac{256^2}{29^2} \approx 78$ model evaluations per image.
+Clearly there is a trade-off in terms of memory and time requirements.
+
+Most interestingly, this architectural change would allow the model to take into account
+the whole image rather than just patches, which would grant the model the global spatial information
+which it currently has no way of leveraging.
+That is we completely disregard patch-based inputs to the model, and instead feed in the whole $256 \times 256$ image
+to the model, which then outputs a $256 \times 256$ segmentation mask.
+Thus predicting via up-scaling paths - potentially with skip connections like U-net -
+the model would be much much larger and a single model evaluation would be substantially more memory and time intensive,
+however a single model evaluation would give us a complete segmentation mask for the input image.
